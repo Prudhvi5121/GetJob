@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "start": "node dist/index.js",
     "build": "tsc -p .",
     "lint": "echo \"No linter configured\""
   },

@@ -7,6 +7,21 @@ import { recordRunStart } from './persist/store';
 const app = express();
 app.use(express.json());
 
+const frontendUrl = process.env.FRONTEND_URL;
+if (frontendUrl) {
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin === frontendUrl) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Vary', 'Origin');
+      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    }
+    if (req.method === 'OPTIONS') return res.sendStatus(origin === frontendUrl ? 204 : 403);
+    next();
+  });
+}
+
 // Simple error envelope
 function errorEnvelope(res: any, status: number, message: string) {
   return res.status(status).json({ error: { message } });
