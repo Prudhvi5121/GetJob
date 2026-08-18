@@ -1,41 +1,72 @@
-DECISIONS
-=========
+# GetJob: Acdyon Technologies Engineering Challenge, Part 1
 
-Q1 — Why did I choose this ingestion strategy over the obvious alternative?
+## 1. Detection Surface
 
-Answer: I chose to ingest from a documented public API (the Arbeitnow feed) rather than attempting to scrape protected or dynamically rendered websites because the public API provides a stable, documented, and predictable data source.
+GetJob uses Arbeitnow's documented public job API as its primary source. It does not attempt to bypass CAPTCHA, authentication, bot protection, rate limits, or access controls, and it does not probe protected production job boards.
 
-Practical reasons:
-- Stability: a documented API returns structured data and is less likely to break from UI changes than HTML scraping.
-- Legality and ethics: using a public feed respects the provider's intended access model and reduces legal/ethical risk compared with scraping authenticated or rate-limited pages.
-- Observability: the ingestion pipeline benefits from clear request/response shapes and error cases returned by the API, which simplifies validation and error handling.
+The responsible approach is to identify a supported API/feed, inspect its actual response contract, validate incoming data, normalize it into the application's canonical shape, handle failures, respect source limitations, and persist only data returned by the source. This avoids pretending that protected-platform scraping is part of the implementation.
 
-Using the public API enabled straightforward validation, normalization, deduplication, and persistence steps in the pipeline without adding fragile scraping logic.
+## 2. Ingestion Strategy
 
-Q2 — Key decisions and trade-offs
-- Keep UI simple and responsive: implemented minimal, premium-looking controls without adding advanced filtering or P4 features.
-- Admin run trigger: implemented a manual trigger + short polling loop in the UI; this is intentionally simple (no websockets) to keep behavior deterministic and low-risk.
-- Static test server: added `frontend/tools/static-server.js` to serve built assets and proxy `/api` to the running backend for reliable headless E2E runs.
-- Runtime fix: imported `zone.js` in `src/main.ts` to satisfy Angular's zone-based change detection (required for bootstrap); this is a necessary runtime dependency, not a behavioral change.
-- Tests tolerant of backend timing: some Playwright assertions accept either a running indicator or an immediate error (rate-limit) when triggering ingestion, to keep tests stable across environments.
+The implemented pipeline is:
 
-Q3 — How to run and verify (commands used during verification)
-- Backend (dev):
-  - `cd backend`
-  - `npm install` (if necessary)
-  - `npm run start` (runs ts-node-dev at http://localhost:3000)
-  - `npm run build` (compiles TypeScript)
+`fetch -> validate -> normalize -> deduplicate -> persist -> record run statistics`
 
-- Frontend (build & serve for tests):
-  - `cd frontend`
-  - `npm install`
-  - `npx ng build` (produces optimized `dist`)
-  - `node tools/static-server.js` (serves `dist` at http://127.0.0.1:4300 and proxies `/api` to backend)
+- `JobSourceAdapter` defines the source boundary. `ArbeitnowJobSource` implements it and requests `https://arbeitnow.com/api/job-board-api`.
+- The Arbeitnow response shape was inspected before defining the Zod schemas for the response and job fields.
+- Zod validates both the response envelope in the adapter and individual items in `ingest/validate.ts`. Invalid items are counted and excluded from normalization.
+- `ingest/normalize.ts` maps valid records to canonical fields, converts the Unix timestamp to ISO time, and preserves tags and job types.
+- `persist/store.ts` deduplicates primarily on `(source, source_job_id)`. If no source job ID exists, it uses a SHA-256 fingerprint of title, company, and location as the fallback.
+- SQLite stores jobs, ingestion runs, and source health. The actual run table is `runs`; it records source, timestamps, fetched, validated, normalized, inserted, updated, duplicate, invalid, and error values. There is no separate `source_runs` table.
+- The ingestion code writes the latest successful raw response to `backend/data/cache_arbeitnow.json` and records cache use in run statistics.
+- The API ingestion trigger is rate-limited per client IP. Immediate repeated calls return HTTP 429.
+- Errors are recorded in the run row; API failures use safe error responses rather than exposing stack traces to clients.
 
-- Run Playwright tests:
-  - `npx playwright install --with-deps` (one-time)
-  - `npx playwright test --config=playwright.config.ts`
+## 3. Resilience
 
-Notes: all verification runs used the real backend and the static server proxy so E2E tests exercised the real APIs.
+`fetchFromArbeitnowWithRetries` allows up to three attempts. Network errors and 5xx responses are treated as transient and retried with exponential backoff of 500ms, then 1s. 4xx responses are treated as non-transient and stop retrying early.
 
-End of decisions (one-page summary)
+- If the API succeeds, the response is cached, source health is marked healthy, and valid normalized jobs are upserted.
+- If some records fail validation, valid records continue through the pipeline and the invalid count is recorded.
+- If a transient fetch failure continues, or a non-transient fetch fails, the pipeline uses the last-known-good cache when available and records the fetch error and cache use.
+- If fetching fails and no cache is available, the run is finished with an error and the ingestion operation fails.
+- `source_health` stores healthy state, last check, last error, consecutive failures, and last success time. Cache fallback is available; it is not presented as fresh source data.
+
+## 4. Where I Would Stop
+
+If a platform requires bypassing CAPTCHA, authentication, bot protection, rate limits, or other access controls, I would stop rather than attempt to defeat those controls.
+
+The alternatives are an official API, a documented RSS/feed, a licensed data source, or a sandbox/source that I control. GetJob intentionally uses a supported public API instead of scraping protected production job boards.
+
+## 5. What Was Cut / Not Implemented
+
+This repository intentionally does not implement:
+
+- Protected-site scraping or access-control bypasses.
+- LinkedIn, Indeed, Naukri, or other protected-platform integrations.
+- A second job-source adapter.
+- User authentication or authorization.
+- PostgreSQL migration.
+- CI/CD or deployment automation.
+- P4 features.
+
+These omissions are deliberate scope and responsible-data boundaries, not hidden implementation claims.
+
+## 6. AI Usage
+
+AI tools were used during development for code suggestions, debugging, UI iteration, test assistance, and documentation assistance. The implementation was reviewed, tested, modified, and verified by the developer. The project does not claim that every line was authored from scratch without AI assistance.
+
+## 7. Verification
+
+The following verification was performed against the repository:
+
+- Backend TypeScript build: `cd backend && npm run build` passed.
+- Frontend production build: `cd frontend && npm run build` passed.
+- Backend automated API script: `npx ts-node --transpile-only src/scripts/test_api_automated.ts` passed, including API, ingestion trigger, and 429 rate-limit checks.
+- Playwright E2E suite: `cd frontend && npm run e2e` passed with 8 tests.
+- P0-P3 behavior was covered through ingestion/API checks, discovery, details, filters, pagination, loading/error states, responsive checks, and the admin dashboard.
+- Responsive overflow checks passed at 390px, 768px, and 1440px.
+
+## 8. Interview Defensibility
+
+Each decision follows the same boundary: use a supported source, validate what it actually returns, make failures observable, retain last-known-good data only when explicitly marked as cached, and stop where access controls would need to be defeated. The implementation is intentionally small enough to trace from source fetch through persistence and API exposure.

@@ -7,13 +7,16 @@ import { HomeComponent } from './home.component';
 import { JobsComponent } from './jobs.component';
 import { JobDetailComponent } from './job-detail.component';
 import { AdminComponent } from './admin.component';
+import { JobCardComponent } from './job-card.component';
+import { SavedJobsComponent } from './saved-jobs.component';
 
 @NgModule({
-  declarations: [AppComponent, HomeComponent, JobsComponent, JobDetailComponent, AdminComponent],
+  declarations: [AppComponent, HomeComponent, JobsComponent, JobDetailComponent, AdminComponent, JobCardComponent, SavedJobsComponent],
   imports: [BrowserModule, FormsModule, RouterModule.forRoot([
     { path: '', component: HomeComponent },
     { path: 'jobs', component: JobsComponent },
     { path: 'jobs/:id', component: JobDetailComponent },
+    { path: 'saved', component: SavedJobsComponent },
     { path: 'admin', component: AdminComponent }
   ])],
   providers: [],

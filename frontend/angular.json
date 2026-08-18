@@ -18,8 +18,8 @@
             "tsConfig": "tsconfig.app.json",
             "sourceMap": false,
             "optimization": true,
-            "assets": [],
-            "styles": [],
+              "assets": [],
+              "styles": ["src/styles.scss"],
             "scripts": []
           }
         },

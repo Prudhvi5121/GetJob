@@ -19,10 +19,15 @@ The following features are implemented and were verified end-to-end in this work
 
 ## Architecture
 
-High-level architecture (frontend talks to backend; backend talks to external job sources such as Arbeitnow):
+High-level architecture:
 
 ```mermaid
-graph LR    A[Angular Frontend] --> B[Express REST API]    B --> C[SQLite Database]    B --> D[Arbeitnow API]    B --> E[Ingestion Service]    E --> C
+graph LR
+  A[Angular Frontend] --> B[Express REST API]
+  B --> C[SQLite Database]
+  B --> D[Arbeitnow API]
+  B --> E[Ingestion Service]
+  E --> C
 ```
 
 ## Tech stack

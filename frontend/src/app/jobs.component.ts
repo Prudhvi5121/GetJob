@@ -1,79 +1,54 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { FreshnessService, FreshnessStatus } from './freshness.service';
 
 @Component({
   selector: 'app-jobs',
   template: `
-    <section>
-      <h2>Jobs</h2>
-      <div class="controls">
-        <input placeholder="Search" [(ngModel)]="q" />
-        <input placeholder="Location" [(ngModel)]="location" />
-        <label class="remote"><input type="checkbox" [(ngModel)]="remote" /> Remote</label>
-        <input placeholder="Category" [(ngModel)]="category" />
-        <select multiple [(ngModel)]="job_types">
-          <option *ngFor="let t of availJobTypes" [value]="t">{{t}}</option>
-        </select>
-        <button (click)="search()">Search</button>
+    <section class="jobs-page">
+      <header class="jobs-hero"><div><p class="eyebrow">Job marketplace</p><h2>Jobs</h2><p class="hero-title">Find work that fits</p><p>Search real opportunities and refine by the details that matter.</p></div><div class="hero-note"><span class="hero-note-dot"></span><span>Public-source opportunities</span></div></header>
+      <div class="controls search-bar">
+        <label class="search-field"><span aria-hidden="true">⌕</span><span class="sr-only">Search jobs</span><input placeholder="Search" [(ngModel)]="q" (keyup.enter)="search()" /></label>
+        <label class="search-field"><span aria-hidden="true">●</span><span class="sr-only">Location</span><input placeholder="Location" list="job-locations" [(ngModel)]="location" (keyup.enter)="search()" /></label>
+        <datalist id="job-locations"><option *ngFor="let place of locationOptions" [value]="place"></option></datalist>
+        <button type="button" (click)="search()">Search Jobs <span aria-hidden="true">→</span></button>
       </div>
-
-      <div *ngIf="loading">Loading...</div>
-      <div *ngIf="error" class="error">{{ error }}</div>
-
-      <ul *ngIf="jobs?.length">
-        <li *ngFor="let j of jobs" class="job-item">
-          <a [routerLink]="['/jobs', j.id]">{{ j.title }}</a>
-          <div class="meta">{{ j.company_name }} — {{ j.location }}</div>
-        </li>
-      </ul>
-      <div *ngIf="jobs && jobs.length === 0">No jobs found.</div>
-
-      <div class="pagination">
-        <button (click)="prev()" [disabled]="page<=1">Prev</button>
-        <span>Page {{ page }} of {{ totalPages }}</span>
-        <button (click)="next()" [disabled]="page>=totalPages">Next</button>
+      <div class="jobs-layout">
+        <aside class="filter-panel">
+          <div class="filter-heading"><div><p class="eyebrow">Refine results</p><h3>Filters</h3></div><button type="button" (click)="clearFilters()">Clear all</button></div>
+          <div class="filter-label"><span>Work mode</span><div class="segmented"><button type="button" [class.selected]="remote === null" (click)="setRemote(null)">All</button><button type="button" [class.selected]="remote === true" (click)="setRemote(true)">Remote</button><button type="button" [class.selected]="remote === false" (click)="setRemote(false)">On-site</button></div></div>
+          <label class="filter-label">Category<input placeholder="Category" [(ngModel)]="category" (keyup.enter)="search()" /></label>
+          <label class="filter-label">Job type<select multiple [(ngModel)]="job_types" (change)="search()"><option *ngFor="let t of availJobTypes" [value]="t">{{t}}</option></select></label>
+        </aside>
+        <div class="results-area">
+          <div class="results-heading"><div><p class="eyebrow">Results</p><h3>{{ total }} opportunities <span *ngIf="freshness" class="freshness-indicator" [class.healthy]="freshness.state === 'healthy'" [class.stale]="freshness.state === 'stale'" [attr.title]="freshnessDate ? 'Last updated ' + freshnessDate : freshness.label"><span class="freshness-dot" aria-hidden="true"></span>{{ freshness.label }}<small *ngIf="freshnessDate">· {{ freshnessDate }}</small></span></h3></div><div *ngIf="activeFilters.length" class="active-filters"><span *ngFor="let filter of activeFilters">{{ filter }}</span></div></div>
+          <div *ngIf="loading" class="skeleton-grid" aria-label="Loading jobs"><div *ngFor="let item of [1,2,3,4]" class="skeleton-card"><i></i><b></b><span></span></div></div>
+          <div *ngIf="error" class="error">{{ error }}</div>
+          <div *ngIf="jobs?.length" class="job-grid"><app-job-card *ngFor="let j of jobs" [job]="j"></app-job-card></div>
+          <div *ngIf="!loading && jobs && jobs.length === 0" class="state"><strong>{{ location === 'India' ? 'No jobs found in India' : 'No jobs found.' }}</strong><span>{{ location === 'India' ? 'Try another city or browse all locations.' : 'Try changing your search or filters.' }}</span><button *ngIf="location === 'India'" type="button" (click)="browseAll()">Browse All Jobs</button><button *ngIf="location !== 'India'" type="button" (click)="clearFilters()">Clear filters</button></div>
+          <div class="pagination"><button (click)="prev()" [disabled]="page<=1" aria-label="Previous page">← Prev</button><span>Page {{ page }} of {{ totalPages }}</span><button (click)="next()" [disabled]="page>=totalPages" aria-label="Next page">Next →</button></div>
+        </div>
       </div>
     </section>
   `,
-  styles: [
-    `.controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
-     .controls input,.controls select{padding:8px;border:1px solid #e5e7eb;border-radius:6px}
-     .controls .remote{display:flex;align-items:center;gap:6px}
-     .job-item{padding:12px 0;border-bottom:1px solid #eef2ff}.meta{color:#6b7280}`
-  ]
+  styles: [`
+    .jobs-page{padding-bottom:18px}.jobs-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:18px;padding:26px 28px;border:1px solid #cde7e3;border-radius:var(--radius-lg);background:linear-gradient(120deg,#eaf8f5,#f7fbfc 68%)}.eyebrow{margin:0 0 7px;color:var(--accent-strong);font-size:.74rem;font-weight:850;letter-spacing:.1em;text-transform:uppercase}.jobs-hero h2,.results-heading h3{margin:0;color:var(--text);letter-spacing:-.045em}.jobs-hero h2{font-size:clamp(1.8rem,4vw,2.65rem)}.jobs-hero .hero-title{margin:8px 0 0;color:#1a3552;font-size:1.05rem;font-weight:800}.jobs-hero>div:first-child>p:last-child{max-width:570px;margin:7px 0 0;color:var(--muted);line-height:1.55}.hero-note{display:flex;align-items:center;gap:8px;color:var(--accent-strong);font-size:.78rem;font-weight:800;white-space:nowrap}.hero-note-dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}.controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;padding:9px;border:1px solid var(--line);border-radius:var(--radius-md);background:#fff;box-shadow:var(--shadow-sm)}.search-field{display:flex;align-items:center;flex:1 1 220px;gap:8px;padding:0 11px;color:var(--accent-strong);border:1px solid #d7e0e8;border-radius:9px}.search-field input{width:100%;min-width:0;padding:11px 0;border:0;color:var(--text);outline:none}.search-field:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px rgba(22,184,166,.13)}.controls button,.pagination button,.state button{padding:11px 16px;border:0;border-radius:9px;background:var(--accent);color:#042033;font-weight:850;cursor:pointer}.controls button:hover,.pagination button:hover:not(:disabled),.state button:hover{filter:brightness(.94)}.jobs-layout{display:grid;grid-template-columns:248px minmax(0,1fr);gap:22px;align-items:start}.filter-panel{position:sticky;top:88px;padding:18px;border:1px solid var(--line);border-radius:var(--radius-lg);background:#fff;box-shadow:var(--shadow-sm)}.filter-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}.filter-heading h3{margin:0;color:var(--text);font-size:1rem}.filter-heading button{padding:0;border:0;color:var(--accent-strong);background:none;font-size:.78rem;font-weight:800;cursor:pointer}.filter-label{display:grid;gap:7px;margin-top:16px;color:#46566b;font-size:.82rem;font-weight:800}.filter-label input,.filter-label select{width:100%;min-width:0;padding:9px 10px;border:1px solid #d7e0e8;border-radius:8px;color:var(--text);background:#fff;outline:none}.filter-label input:focus,.filter-label select:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(22,184,166,.13)}.filter-label select{min-height:80px}.segmented{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px;border-radius:9px;background:#f0f4f6}.segmented button{padding:8px 4px;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:.72rem;font-weight:800;cursor:pointer}.segmented button.selected{background:#fff;color:var(--accent-strong);box-shadow:0 1px 3px rgba(16,42,67,.1)}.results-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:15px}.results-heading h3{font-size:1.55rem}.active-filters{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}.active-filters span{display:block;max-width:190px;overflow:hidden;padding:5px 8px;border-radius:999px;color:#08776f;background:var(--accent-soft);font-size:.74rem;font-weight:800;text-overflow:ellipsis;white-space:nowrap}.job-grid,.skeleton-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.skeleton-card{min-height:190px;padding:18px;border:1px solid var(--line);border-radius:var(--radius-lg);background:#fff}.skeleton-card>*{display:block;border-radius:8px;background:linear-gradient(100deg,#edf1f4 20%,#f8fafb 40%,#edf1f4 60%);background-size:200% 100%;animation:shimmer 1.25s infinite}.skeleton-card i{width:40px;height:40px}.skeleton-card b{width:62%;height:15px;margin-top:17px}.skeleton-card span{width:90%;height:11px;margin-top:13px}@keyframes shimmer{to{background-position:-200% 0}}.state,.error{display:grid;gap:8px;padding:28px;border-radius:var(--radius-md);background:#fff}.state{border:1px dashed #cbd5e1;color:var(--muted)}.state strong{color:var(--text);font-size:1.05rem}.state button{width:max-content;margin-top:5px}.error{border:1px solid #f5c2c7;color:#b42318;background:#fff4f4}.pagination{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:22px;color:var(--muted);font-size:.88rem}.pagination button:disabled{cursor:not-allowed;background:#dce8e8;color:#74838a}@media(max-width:900px){.jobs-layout{grid-template-columns:1fr}.filter-panel{position:static;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.filter-heading{grid-column:1/-1;margin:0}.filter-label{margin:0}}@media(max-width:600px){.jobs-hero{align-items:flex-start;flex-direction:column;padding:23px 20px}.hero-note{display:none}.controls button{width:100%}.filter-panel{grid-template-columns:1fr}.results-heading{align-items:flex-start;flex-direction:column}.active-filters{justify-content:flex-start}.job-grid,.skeleton-grid{grid-template-columns:1fr}.pagination{justify-content:space-between}.pagination button{padding:10px 11px}}
+  `]
 })
 export class JobsComponent implements OnInit {
-  jobs: any[] = [];
-  loading = false;
-  error: string | null = null;
-  q = '';
-  location = '';
-  remote: boolean | null = null;
-  category = '';
-  job_types: string[] = [];
-  availJobTypes: string[] = ['Full Time','Part Time','Contract','Internship','Temporary'];
-  page = 1;
-  per_page = 10;
-  total = 0;
-
+  jobs: any[] = []; loading = false; error: string | null = null; q = ''; location = 'All Locations'; remote: boolean | null = null; category = ''; job_types: string[] = []; tags = ''; availJobTypes = ['Full Time','Part Time','Contract','Internship','Temporary']; locationOptions = ['India', 'All Locations', 'Bengaluru', 'Bangalore', 'Hyderabad', 'Chennai', 'Mumbai', 'Pune', 'Delhi', 'Gurugram', 'Gurgaon', 'Noida', 'Kolkata', 'Ahmedabad']; page = 1; per_page = 10; total = 0;
+  freshness: FreshnessStatus | null = null;
+  constructor(private route: ActivatedRoute, private freshnessService: FreshnessService) {}
   get totalPages() { return Math.max(1, Math.ceil(this.total / this.per_page)); }
-
-  ngOnInit(): void { this.load(); }
-
-  load() {
-    this.loading = true; this.error = null;
-    const qs = new URLSearchParams({ page: String(this.page), per_page: String(this.per_page) });
-    if (this.q) qs.set('q', this.q);
-    if (this.location) qs.set('location', this.location);
-    if (this.remote !== null) qs.set('remote', String(this.remote));
-    if (this.category) qs.set('category', this.category);
-    if (this.job_types && this.job_types.length) qs.set('job_types', this.job_types.join(','));
-    fetch('/api/jobs?' + qs.toString())
-      .then(r => r.json())
-      .then(j => { this.jobs = j.data || []; this.total = j.meta?.total || this.jobs.length; this.loading = false; })
-      .catch(() => { this.error = 'Failed to load jobs'; this.loading = false; });
-  }
-
-  search() { this.page = 1; this.load(); }
-  next() { if (this.page < this.totalPages) { this.page++; this.load(); } }
-  prev() { if (this.page > 1) { this.page--; this.load(); } }
+  get activeFilters(): string[] { return [this.q, this.location === 'All Locations' ? '' : this.location, this.remote === true ? 'Remote' : '', this.category, this.tags, ...this.job_types].filter(Boolean); }
+  ngOnInit(): void { this.route.queryParamMap.subscribe(params => { this.q = params.get('q') || ''; const requestedLocation = params.get('location'); this.location = requestedLocation && requestedLocation !== 'All Locations' ? requestedLocation : 'All Locations'; this.tags = params.get('tags') || ''; this.page = 1; this.load(); }); this.loadFreshness(); }
+  get freshnessDate(): string | null { return this.freshnessService.formatDate(this.freshness?.updatedAt || null); }
+  private loadFreshness(): void { this.freshnessService.getStatus().then(status => this.freshness = status); }
+  load(): void { this.loading = true; this.error = null; const qs = new URLSearchParams({ page: String(this.page), per_page: String(this.per_page) }); if (this.q) qs.set('q', this.q); if (this.location && this.location !== 'All Locations') qs.set('location', this.location); if (this.remote !== null) qs.set('remote', String(this.remote)); if (this.category) qs.set('tags', this.category); if (this.tags) qs.set('tags', this.tags); if (this.job_types.length) qs.set('job_types', this.job_types[0]); fetch('/api/jobs?' + qs.toString()).then(r => r.json()).then(j => { this.jobs = j.data || []; this.total = j.meta?.total || this.jobs.length; this.loading = false; }).catch(() => { this.error = 'Failed to load jobs'; this.loading = false; }); }
+  search(): void { this.page = 1; this.load(); }
+  setRemote(value: boolean | null): void { this.remote = value; this.search(); }
+  clearFilters(): void { this.q = ''; this.location = 'All Locations'; this.remote = null; this.category = ''; this.tags = ''; this.job_types = []; this.search(); }
+  browseAll(): void { this.location = 'All Locations'; this.page = 1; this.load(); }
+  next(): void { if (this.page < this.totalPages) { this.page++; this.load(); } }
+  prev(): void { if (this.page > 1) { this.page--; this.load(); } }
 }

@@ -4,31 +4,30 @@ import { ActivatedRoute } from '@angular/router';
 @Component({
   selector: 'app-job-detail',
   template: `
-    <section>
-      <div *ngIf="loading">Loading job...</div>
-      <div *ngIf="error" class="error">{{ error }}</div>
-      <article *ngIf="job">
-        <h2>{{ job.title }}</h2>
-        <div class="meta">{{ job.company_name }} — {{ job.location }}</div>
-        <div class="desc" [innerHTML]="job.description"></div>
-        <p><a [href]="job.url" target="_blank" rel="noreferrer">View Original</a></p>
-      </article>
+    <section class="detail-page">
+      <div *ngIf="loading" class="state">Loading job...</div><div *ngIf="error" class="error">{{ error }}</div>
+      <ng-container *ngIf="job">
+        <a class="back-link" routerLink="/jobs">← Back to jobs</a>
+        <article class="job-detail-card">
+          <div class="company-avatar" *ngIf="job.company_name">{{ companyInitial }}</div>
+          <div class="header-copy"><p *ngIf="job.source" class="source-badge">{{ job.source }}</p><h2>{{ job.title }}</h2><p *ngIf="job.company_name" class="company-name">{{ job.company_name }}</p><div class="metadata"><span *ngIf="job.location">● {{ job.location }}</span><span *ngIf="isRemote">↗ Remote</span><span *ngFor="let type of jobTypes">{{ type }}</span><span *ngFor="let tag of tags">{{ tag }}</span><span *ngIf="formattedDate">{{ formattedDate }}</span></div></div>
+        </article>
+        <div class="detail-layout"><article class="description-card"><h3>About the role</h3><div class="desc" [innerHTML]="job.description"></div></article><article class="summary-card"><p class="eyebrow">Job summary</p><dl><div *ngIf="job.company_name"><dt>Company</dt><dd>{{ job.company_name }}</dd></div><div *ngIf="job.location"><dt>Location</dt><dd>{{ job.location }}</dd></div><div *ngIf="isRemote"><dt>Workplace</dt><dd>Remote</dd></div><div *ngIf="jobTypes.length"><dt>Job type</dt><dd>{{ jobTypes.join(', ') }}</dd></div><div *ngIf="formattedDate"><dt>Published</dt><dd>{{ formattedDate }}</dd></div><div *ngIf="job.source"><dt>Source</dt><dd>{{ job.source }}</dd></div></dl><a class="primary-action" [href]="job.url" target="_blank" rel="noreferrer">View Original Job <span aria-hidden="true">→</span></a></article></div>
+      </ng-container>
     </section>
   `,
   styles: [`
-    .meta{color:#6b7280}
-    .desc{margin-top:12px}
+    .detail-page{max-width:1100px;margin:0 auto}.back-link{display:inline-flex;margin:0 0 16px;color:var(--accent-strong);font-size:.88rem;font-weight:800;text-decoration:none}.back-link:hover{text-decoration:underline}.job-detail-card{display:flex;align-items:flex-start;gap:18px;padding:clamp(24px,4vw,42px);border:1px solid #cce4e2;border-radius:var(--radius-lg);background:linear-gradient(120deg,#eef9f7,#fff 65%);box-shadow:var(--shadow-sm)}.company-avatar{display:grid;flex:0 0 auto;width:58px;height:58px;place-items:center;border-radius:14px;background:#c5eee7;color:#075f5a;font-size:1.35rem;font-weight:850}.header-copy{min-width:0}.source-badge{display:inline-block;margin:0 0 11px;padding:5px 8px;border:1px solid #c5e7e2;border-radius:999px;color:#08776f;background:var(--accent-soft);font-size:.72rem;font-weight:850;text-transform:capitalize}.job-detail-card h2{margin:0;color:var(--text);font-size:clamp(1.9rem,4vw,3.2rem);line-height:1.1;letter-spacing:-.06em}.company-name{margin:11px 0 0;color:#475467;font-size:1.06rem;font-weight:700}.metadata{display:flex;flex-wrap:wrap;gap:7px;margin-top:19px}.metadata span{max-width:100%;overflow-wrap:anywhere;padding:6px 9px;border:1px solid #dce6ec;border-radius:999px;color:#526274;background:#fff;font-size:.78rem;font-weight:750}.detail-layout{display:grid;grid-template-columns:minmax(0,1fr) 285px;gap:22px;margin-top:22px;align-items:start}.description-card,.summary-card{border:1px solid var(--line);border-radius:var(--radius-lg);background:#fff;box-shadow:var(--shadow-sm)}.description-card{padding:clamp(24px,4vw,42px)}.description-card h3{margin:0 0 25px;color:var(--text);font-size:1.25rem;letter-spacing:-.025em}.desc{color:#344054;line-height:1.78;overflow-wrap:anywhere}.desc :first-child{margin-top:0}.desc :last-child{margin-bottom:0}.desc h1,.desc h2,.desc h3,.desc h4{margin:1.8em 0 .65em;color:var(--text);line-height:1.28;letter-spacing:-.025em}.desc h1{font-size:1.45em}.desc h2{font-size:1.28em}.desc h3{font-size:1.1em}.desc p,.desc ul,.desc ol{margin:0 0 1.1em}.desc ul,.desc ol{padding-left:1.3em}.desc a{color:var(--accent-strong);text-decoration:underline}.summary-card{position:sticky;top:88px;padding:22px}.eyebrow{margin:0 0 16px;color:var(--accent-strong);font-size:.76rem;font-weight:850;letter-spacing:.1em;text-transform:uppercase}.summary-card dl{margin:0}.summary-card dl div{padding:12px 0;border-top:1px solid #edf1f4}.summary-card dt{color:var(--muted);font-size:.74rem;font-weight:800;text-transform:uppercase}.summary-card dd{margin:4px 0 0;color:#344054;font-size:.89rem;font-weight:700;overflow-wrap:anywhere}.primary-action{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;margin-top:22px;padding:11px 14px;border-radius:10px;background:var(--accent);color:#042033!important;font-size:.9rem;font-weight:850;text-decoration:none!important;box-shadow:0 2px 5px rgba(4,18,45,.12)}.primary-action:hover{filter:brightness(.94)}.primary-action span{transition:transform .15s ease}.primary-action:hover span{transform:translateX(3px)}.state,.error{padding:28px;border-radius:var(--radius-md);background:#fff}.state{border:1px dashed #cbd5e1;color:var(--muted)}.error{border:1px solid #f5c2c7;color:#b42318;background:#fff4f4}@media(max-width:800px){.detail-layout{grid-template-columns:1fr}.summary-card{position:static}.primary-action{max-width:320px}}@media(max-width:480px){.job-detail-card{gap:13px;padding:22px 18px}.company-avatar{width:46px;height:46px;border-radius:13px;font-size:1.08rem}.metadata{margin-top:15px}.description-card,.summary-card{padding:21px}.primary-action{max-width:none}}
   `]
 })
 export class JobDetailComponent implements OnInit {
   job: any = null; loading = false; error: string | null = null;
   constructor(private route: ActivatedRoute) {}
-  ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    this.loading = true;
-    fetch('/api/jobs/' + id)
-      .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
-      .then(j => { this.job = j.data || j; this.loading = false; })
-      .catch(() => { this.error = 'Failed to load job'; this.loading = false; });
-  }
+  get companyInitial(): string { return (this.job?.company_name || '').trim().charAt(0).toUpperCase(); }
+  get isRemote(): boolean { return this.job?.remote === true || this.job?.remote === 1 || this.job?.remote === '1'; }
+  get jobTypes(): string[] { return this.toList(this.job?.job_types); }
+  get tags(): string[] { return this.toList(this.job?.tags).slice(0, 4); }
+  get formattedDate(): string | null { if (!this.job?.created_at) return null; const date = new Date(this.job.created_at); return Number.isNaN(date.getTime()) ? null : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date); }
+  ngOnInit(): void { const id = this.route.snapshot.paramMap.get('id'); this.loading = true; fetch('/api/jobs/' + id).then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); }).then(j => { this.job = j.data || j; this.loading = false; }).catch(() => { this.error = 'Failed to load job'; this.loading = false; }); }
+  private toList(value: any): string[] { if (Array.isArray(value)) return value.filter(Boolean).map(String); if (typeof value === 'string') { try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed.filter(Boolean).map(String) : [value]; } catch { return value ? [value] : []; } } return []; }
 }

@@ -1,0 +1,114 @@
+:root {
+  color-scheme: light;
+  --primary: #102a43;
+  --primary-deep: #071a2d;
+  --accent: #0f9d8b;
+  --accent-strong: #087c70;
+  --accent-soft: #e7f7f3;
+  --page-bg: #f6f8fa;
+  --card-bg: #ffffff;
+  --text: #102a43;
+  --muted: #64748b;
+  --line: #dfe7ee;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 2px rgba(16, 42, 67, .04), 0 5px 16px rgba(16, 42, 67, .045);
+  --shadow-md: 0 12px 28px rgba(16, 42, 67, .11);
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+}
+
+.theme-dark {
+  color-scheme: dark;
+  --primary: #d9e8f3;
+  --primary-deep: #061522;
+  --accent: #35c7b2;
+  --accent-strong: #52d7c3;
+  --accent-soft: #153c3b;
+  --page-bg: #0b1722;
+  --card-bg: #122331;
+  --text: #e6f0f5;
+  --muted: #9fb2c0;
+  --line: #294050;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .2), 0 5px 16px rgba(0, 0, 0, .14);
+  --shadow-md: 0 12px 28px rgba(0, 0, 0, .28);
+}
+
+* { box-sizing: border-box; }
+html, body { min-width: 0; min-height: 100%; margin: 0; background: var(--page-bg); }
+body { color: var(--text); -webkit-font-smoothing: antialiased; }
+.app-root { min-height: 100vh; background: var(--page-bg); color: var(--text); transition: background-color .2s ease, color .2s ease; }
+button, input, select { font: inherit; }
+button { touch-action: manipulation; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid rgba(22, 184, 166, .45); outline-offset: 3px; }
+
+h1, h2, h3, p { margin-top: 0; }
+button, a, input, select { -webkit-tap-highlight-color: transparent; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+.freshness-indicator { display: inline-flex; align-items: center; gap: 7px; margin-left: 10px; color: var(--muted); font-size: .75rem; font-weight: 800; vertical-align: middle; }
+.freshness-indicator .freshness-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+.freshness-indicator.healthy { color: var(--accent-strong); }
+.freshness-indicator.healthy .freshness-dot { background: var(--accent); }
+.freshness-indicator.stale { color: #b7791f; }
+.freshness-indicator.stale .freshness-dot { background: #d69e2e; }
+
+.theme-dark .site-header { background: rgba(6, 21, 34, .97); }
+.theme-dark .job-item,
+.theme-dark .controls,
+.theme-dark .filter-panel,
+.theme-dark .skeleton-card,
+.theme-dark .state,
+.theme-dark .description-card,
+.theme-dark .summary-card,
+.theme-dark .empty-state,
+.theme-dark .card,
+.theme-dark table { background: var(--card-bg); border-color: var(--line); }
+.theme-dark .jobs-hero,
+.theme-dark .run-action { background: #153442; border-color: #2c5d64; }
+.theme-dark .job-badges span,
+.theme-dark .metadata span { color: var(--muted); background: #182c3a; border-color: var(--line); }
+.theme-dark .job-badges .location { background: transparent; border-color: transparent; }
+.theme-dark .job-badges .is-remote { color: var(--accent-strong); background: var(--accent-soft); border-color: #28645d; }
+.theme-dark .search-field,
+.theme-dark .filter-label input,
+.theme-dark .filter-label select { color: var(--text); background: #0e1d29; border-color: var(--line); }
+.theme-dark .segmented { background: #0e1d29; }
+.theme-dark .segmented button.selected { color: var(--accent-strong); background: var(--card-bg); }
+.theme-dark th { color: var(--muted); background: #0e1d29; }
+.theme-dark .card-footer,
+.theme-dark .summary-card dl div { border-color: #203745; }
+.theme-dark .job-preview,
+.theme-dark .card-title-group p,
+.theme-dark .company-name,
+.theme-dark .desc,
+.theme-dark .summary-card dd { color: var(--muted); }
+.theme-dark .job-detail-card { background: #153442; border-color: #2c5d64; }
+.theme-dark .company-avatar { background: #1d5a59; color: #b5fff1; }
+.theme-dark .source-badge { background: var(--accent-soft); border-color: #28645d; color: var(--accent-strong); }
+.theme-dark .error { background: #351d24; border-color: #71343e; }
+.theme-dark .site-footer { border-color: #203745; }
+.app-root.theme-dark .controls,
+.app-root.theme-dark .filter-panel,
+.app-root.theme-dark .skeleton-card,
+.app-root.theme-dark .state,
+.app-root.theme-dark .description-card,
+.app-root.theme-dark .summary-card,
+.app-root.theme-dark .empty-state,
+.app-root.theme-dark .card,
+.app-root.theme-dark table { background: var(--card-bg); }
+.app-root.theme-dark .search-field,
+.app-root.theme-dark .filter-label input,
+.app-root.theme-dark .filter-label select { background: #0e1d29; color: var(--text); }
+.app-root.theme-dark .job-detail-card,
+.app-root.theme-dark .jobs-hero,
+.app-root.theme-dark .run-action { background: #153442; }
+
+@media (max-width: 900px) {
+  .admin-page .sources { min-width: 0; table-layout: fixed; font-size: .72rem; }
+  .admin-page .sources th, .admin-page .sources td { padding: 9px 5px; }
+}
+
+@media (max-width: 480px) {
+  body { overflow-x: hidden; }
+}

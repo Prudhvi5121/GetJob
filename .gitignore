@@ -26,3 +26,9 @@ dist/
 .env
 /.idea
 /.vscode
+
+# Runtime database and cache
+backend/data/
+
+# Temporary dependency/install test directory
+frontend/install_test/
