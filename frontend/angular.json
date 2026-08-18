@@ -1,0 +1,36 @@
+{
+  "$schema": "https://angular.io/cli/schema.json",
+  "version": 1,
+  "defaultProject": "jobflow-frontend",
+  "projects": {
+    "jobflow-frontend": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist",
+            "index": "src/index.html",
+            "main": "src/main.ts",
+            "polyfills": [],
+            "tsConfig": "tsconfig.app.json",
+            "sourceMap": false,
+            "optimization": true,
+            "assets": [],
+            "styles": [],
+            "scripts": []
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": { "browserTarget": "jobflow-frontend:build" }
+        }
+      }
+    }
+  },
+  "cli": {
+    "analytics": "0e0ff186-406f-45f6-a3ad-032eacf3738d"
+  }
+}
