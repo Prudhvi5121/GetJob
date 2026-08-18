@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FreshnessService, FreshnessStatus } from './freshness.service';
+import { apiUrl } from './api-config';
 
 @Component({
   selector: 'app-jobs',
@@ -44,7 +45,7 @@ export class JobsComponent implements OnInit {
   ngOnInit(): void { this.route.queryParamMap.subscribe(params => { this.q = params.get('q') || ''; const requestedLocation = params.get('location'); this.location = requestedLocation && requestedLocation !== 'All Locations' ? requestedLocation : 'All Locations'; this.tags = params.get('tags') || ''; this.page = 1; this.load(); }); this.loadFreshness(); }
   get freshnessDate(): string | null { return this.freshnessService.formatDate(this.freshness?.updatedAt || null); }
   private loadFreshness(): void { this.freshnessService.getStatus().then(status => this.freshness = status); }
-  load(): void { this.loading = true; this.error = null; const qs = new URLSearchParams({ page: String(this.page), per_page: String(this.per_page) }); if (this.q) qs.set('q', this.q); if (this.location && this.location !== 'All Locations') qs.set('location', this.location); if (this.remote !== null) qs.set('remote', String(this.remote)); if (this.category) qs.set('tags', this.category); if (this.tags) qs.set('tags', this.tags); if (this.job_types.length) qs.set('job_types', this.job_types[0]); fetch('/api/jobs?' + qs.toString()).then(r => r.json()).then(j => { this.jobs = j.data || []; this.total = j.meta?.total || this.jobs.length; this.loading = false; }).catch(() => { this.error = 'Failed to load jobs'; this.loading = false; }); }
+  load(): void { this.loading = true; this.error = null; const qs = new URLSearchParams({ page: String(this.page), per_page: String(this.per_page) }); if (this.q) qs.set('q', this.q); if (this.location && this.location !== 'All Locations') qs.set('location', this.location); if (this.remote !== null) qs.set('remote', String(this.remote)); if (this.category) qs.set('tags', this.category); if (this.tags) qs.set('tags', this.tags); if (this.job_types.length) qs.set('job_types', this.job_types[0]); fetch(apiUrl('/api/jobs?' + qs.toString())).then(r => r.json()).then(j => { this.jobs = j.data || []; this.total = j.meta?.total || this.jobs.length; this.loading = false; }).catch(() => { this.error = 'Failed to load jobs'; this.loading = false; }); }
   search(): void { this.page = 1; this.load(); }
   setRemote(value: boolean | null): void { this.remote = value; this.search(); }
   clearFilters(): void { this.q = ''; this.location = 'All Locations'; this.remote = null; this.category = ''; this.tags = ''; this.job_types = []; this.search(); }

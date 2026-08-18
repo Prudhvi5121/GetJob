@@ -32,3 +32,6 @@ backend/data/
 
 # Temporary dependency/install test directory
 frontend/install_test/
+
+# Frontend build-generated API configuration
+frontend/src/app/api-config.generated.ts

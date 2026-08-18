@@ -7,17 +7,25 @@ import { recordRunStart } from './persist/store';
 const app = express();
 app.use(express.json());
 
-const frontendUrl = process.env.FRONTEND_URL;
-if (frontendUrl) {
+const configuredFrontendUrl = process.env.FRONTEND_URL;
+const allowedFrontendUrls = new Set([
+  'https://get-job-seven.vercel.app',
+  'http://localhost:4200',
+  'http://127.0.0.1:4200',
+  'http://localhost:4300',
+  'http://127.0.0.1:4300',
+  ...(configuredFrontendUrl ? [configuredFrontendUrl] : [])
+]);
+if (allowedFrontendUrls.size) {
   app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (origin === frontendUrl) {
+    if (origin && allowedFrontendUrls.has(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Vary', 'Origin');
       res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     }
-    if (req.method === 'OPTIONS') return res.sendStatus(origin === frontendUrl ? 204 : 403);
+    if (req.method === 'OPTIONS') return res.sendStatus(origin && allowedFrontendUrls.has(origin) ? 204 : 403);
     next();
   });
 }

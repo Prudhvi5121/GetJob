@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "ng serve --open",
-    "build": "ng build",
+    "start": "node scripts/generate-api-config.js && ng serve --open",
+    "build": "node scripts/generate-api-config.js && ng build",
     "test": "node -e \"console.log('No unit tests configured'); process.exit(0);\"",
     "e2e": "npx playwright test"
   },

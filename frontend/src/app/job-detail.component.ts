@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { apiUrl } from './api-config';
 
 @Component({
   selector: 'app-job-detail',
@@ -28,6 +29,6 @@ export class JobDetailComponent implements OnInit {
   get jobTypes(): string[] { return this.toList(this.job?.job_types); }
   get tags(): string[] { return this.toList(this.job?.tags).slice(0, 4); }
   get formattedDate(): string | null { if (!this.job?.created_at) return null; const date = new Date(this.job.created_at); return Number.isNaN(date.getTime()) ? null : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date); }
-  ngOnInit(): void { const id = this.route.snapshot.paramMap.get('id'); this.loading = true; fetch('/api/jobs/' + id).then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); }).then(j => { this.job = j.data || j; this.loading = false; }).catch(() => { this.error = 'Failed to load job'; this.loading = false; }); }
+  ngOnInit(): void { const id = this.route.snapshot.paramMap.get('id'); this.loading = true; fetch(apiUrl('/api/jobs/' + id)).then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); }).then(j => { this.job = j.data || j; this.loading = false; }).catch(() => { this.error = 'Failed to load job'; this.loading = false; }); }
   private toList(value: any): string[] { if (Array.isArray(value)) return value.filter(Boolean).map(String); if (typeof value === 'string') { try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed.filter(Boolean).map(String) : [value]; } catch { return value ? [value] : []; } } return []; }
 }

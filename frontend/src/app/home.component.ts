@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { apiUrl } from './api-config';
 
 @Component({
   selector: 'app-home',
@@ -45,7 +46,7 @@ export class HomeComponent implements OnInit {
   constructor(private router: Router) {}
   ngOnInit(): void {
     this.loading = true;
-    fetch('/api/jobs?per_page=10').then(r => r.json()).then(j => {
+    fetch(apiUrl('/api/jobs?per_page=10')).then(r => r.json()).then(j => {
       this.jobs = j.data || []; this.categories = this.collectCategories(this.jobs); this.isFresh = this.jobs.some(job => this.isRecent(job.created_at)); this.loading = false;
     }).catch(() => { this.error = 'Failed to load jobs'; this.loading = false; });
   }

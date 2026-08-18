@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { apiUrl } from './api-config';
 
 @Component({
   selector: 'app-admin',
@@ -74,18 +75,18 @@ export class AdminComponent implements OnInit {
   ngOnInit(): void {
     this.loadSources();
     this.loadRuns();
-    fetch('/api/jobs?per_page=1').then(r => r.json()).then(j => this.totalJobs = j.meta?.total || 0).catch(() => this.totalJobs = 0);
+    fetch(apiUrl('/api/jobs?per_page=1')).then(r => r.json()).then(j => this.totalJobs = j.meta?.total || 0).catch(() => this.totalJobs = 0);
   }
 
   loadSources() {
-    fetch('/api/sources')
+    fetch(apiUrl('/api/sources'))
       .then(r => r.json())
       .then(j => { this.sources = j.data || j || []; })
       .catch(() => { this.sources = []; });
   }
 
   loadRuns() {
-    fetch('/api/ingestion/runs')
+    fetch(apiUrl('/api/ingestion/runs'))
       .then(r => r.json())
       .then(j => { this.runs = j.data || j || []; })
       .catch(() => { this.runs = []; });
@@ -94,7 +95,7 @@ export class AdminComponent implements OnInit {
   async runIngestion() {
     this.running = true; this.runError = null; this.runMessage = null;
     try {
-      const resp = await fetch('/api/ingestion/run', { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({}) });
+      const resp = await fetch(apiUrl('/api/ingestion/run'), { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({}) });
       if (!resp.ok) throw new Error('Failed to start ingestion');
       // poll recent runs until latest run not running
       for (let i=0;i<30;i++) {

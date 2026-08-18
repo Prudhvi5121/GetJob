@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { apiUrl } from './api-config';
 
 export type FreshnessState = 'healthy' | 'stale' | 'unknown';
 
@@ -13,8 +14,8 @@ export class FreshnessService {
   async getStatus(): Promise<FreshnessStatus> {
     try {
       const [healthResponse, runsResponse] = await Promise.all([
-        fetch('/api/health'),
-        fetch('/api/ingestion/runs?per_page=50')
+        fetch(apiUrl('/api/health')),
+        fetch(apiUrl('/api/ingestion/runs?per_page=50'))
       ]);
       if (!healthResponse.ok || !runsResponse.ok) return this.unknown();
 

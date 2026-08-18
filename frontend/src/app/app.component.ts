@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { apiUrl } from './api-config';
 
 @Component({
   selector: 'app-root',
@@ -53,7 +54,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     // keep a quick health ping (not required for pages)
-    fetch('/api/health')
+    fetch(apiUrl('/api/health'))
       .then(r => r.json())
       .then(j => (this.health = j))
       .catch(() => (this.health = { status: 'unreachable' }));
