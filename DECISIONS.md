@@ -1,10 +1,16 @@
 DECISIONS
 =========
 
-Q1 — What I implemented
-- Backend: TypeScript + Express API with endpoints: `/api/jobs`, `/api/jobs/:id`, `/api/health`, `/api/sources`, `/api/sources/:source`, `/api/ingestion/runs`, `POST /api/ingestion/run` and a rate-limit on ingestion triggers. Ingestion pipeline persists run metrics (fetched/validated/normalized/inserted/etc.).
-- Frontend: Angular SPA with Home, Jobs (search + filters: location, remote, category, job_types), pagination, Job Details (`View Original`), and an Admin ingestion dashboard (`/admin`) showing overview cards, source health table, recent runs, and a manual `Run ingestion now` trigger.
-- Tests: Backend automated API script and Playwright E2E tests for P2 and P3. All tests passed during verification.
+Q1 — Why did I choose this ingestion strategy over the obvious alternative?
+
+Answer: I chose to ingest from a documented public API (the Arbeitnow feed) rather than attempting to scrape protected or dynamically rendered websites because the public API provides a stable, documented, and predictable data source.
+
+Practical reasons:
+- Stability: a documented API returns structured data and is less likely to break from UI changes than HTML scraping.
+- Legality and ethics: using a public feed respects the provider's intended access model and reduces legal/ethical risk compared with scraping authenticated or rate-limited pages.
+- Observability: the ingestion pipeline benefits from clear request/response shapes and error cases returned by the API, which simplifies validation and error handling.
+
+Using the public API enabled straightforward validation, normalization, deduplication, and persistence steps in the pipeline without adding fragile scraping logic.
 
 Q2 — Key decisions and trade-offs
 - Keep UI simple and responsive: implemented minimal, premium-looking controls without adding advanced filtering or P4 features.

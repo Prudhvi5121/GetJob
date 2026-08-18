@@ -1,38 +1,34 @@
-# JobFlow (GetJob)
+# GetJob
 
-This repository contains a small job aggregation project (frontend + backend) used for verification of ingestion, API, and UI requirements.
+This repository contains GetJob, a small job-aggregation project (frontend + backend) used for verification of ingestion, API, and UI requirements.
 
 WARNING: This README documents only what is implemented in this workspace at the time of writing. It does not describe planned or unimplemented features.
 
 ## Overview
 
 - Backend: TypeScript + Express API that stores job records in SQLite and implements an ingestion pipeline and related operational endpoints.
-- Frontend: Angular 16 single-page app (`jobflow-frontend`) that queries the backend and provides job browsing, search, filters, job details, and an admin ingestion dashboard.
+- Frontend: Angular 16.2.0 single-page app (`jobflow-frontend`) that queries the backend and provides job browsing, search, filters, job details, and an admin ingestion dashboard.
 
-## Acdyon Part 1 scope (implemented)
+## P0–P3 scope (implemented)
 
 The following features are implemented and were verified end-to-end in this workspace:
 - Backend API endpoints: `/api/jobs`, `/api/jobs/:id`, `/api/health`, `/api/sources`, `/api/sources/:source`, `/api/ingestion/runs`, and `POST /api/ingestion/run`.
 - Ingestion pipeline runs and records per-run metrics (fetched_count, validated_count, normalized_count, inserted_count, updated_count, duplicate_count, invalid_count, error) and persists results in the DB.
-- Frontend P2 features: Home, Jobs list with search, filters (location, remote, category, job_types), pagination, Job Details including 'View Original'.
-- Frontend P3 features: Admin ingestion observability dashboard with overview cards, source health table, recent ingestion runs table, and manual `Run ingestion now` trigger.
+- P2 — Core discovery frontend: Home, Jobs list with search, filters (location, remote, category, job_types), pagination, Job Details including 'View Original'.
+- P3 — Admin / ingestion observability dashboard: overview cards, source health table, recent ingestion runs table, and manual `Run ingestion now` trigger.
 
 ## Architecture
 
 High-level architecture (frontend talks to backend; backend talks to external job sources such as Arbeitnow):
 
 ```mermaid
-graph LR
-  A[Browser / Angular SPA] -->|HTTP| B[Static server (tools/static-server.js)]
-  B -->|/api/* proxy| C[Backend (Express, TypeScript)]
-  C -->|reads/writes| D[SQLite DB (backend/data/...)]
-  C -->|fetches jobs| E[Arbeitnow API (external)]
+graph LR    A[Angular Frontend] --> B[Express REST API]    B --> C[SQLite Database]    B --> D[Arbeitnow API]    B --> E[Ingestion Service]    E --> C
 ```
 
 ## Tech stack
 
 - Backend: Node.js (tested on Node v24.13.0), TypeScript, Express, better-sqlite3, Zod (used elsewhere in repo). Build via `tsc`.
-- Frontend: Angular 16, TypeScript, Angular Router, Forms. Build via Angular CLI (`ng build`).
+- Frontend: Angular 16.2.0, TypeScript, Angular Router, Forms. Build via Angular CLI (`ng build`).
 - E2E tests: Playwright (`@playwright/test`) with headless Chromium/Firefox/WebKit installed by `npx playwright install --with-deps`.
 
 ## Setup
@@ -51,8 +47,6 @@ npx playwright install --with-deps   # only needed for Playwright tests
 cd ../backend
 npm install
 ```
-
-Note: the workspace previously encountered and recovered from transient `ENOSPC` and local `node_modules` metadata issues; if you see semver/dedupe errors, try removing `node_modules` and reinstalling.
 
 ## Environment variables and configuration
 
@@ -97,7 +91,7 @@ curl -X POST http://localhost:3000/api/ingestion/run -H 'Content-Type: applicati
 curl http://localhost:3000/api/ingestion/runs
 ```
 
-Rate limiting: the backend enforces a short rate limit on `POST /api/ingestion/run` to avoid concurrent or too-frequent runs; automated tests exercise that behavior.
+Responsible usage: this workspace used the Arbeitnow public job feed during verification. During testing we exercised ingestion end-to-end and verified that repeated immediate calls to `POST /api/ingestion/run` return a 429 response (rate limited). Please avoid running ingestion in tight loops; be considerate of the external API when running repeated ingestion tests.
 
 ## API endpoints (implemented)
 
@@ -154,10 +148,10 @@ npx playwright install --with-deps
 
 ## P0–P3 verification results (actual)
 
-- P0 — Backend core APIs & ingestion: PASS (automated API script passed)
-- P1 — Backend serving real data & ingestion pipeline: PASS (ingestion run lifecycle observed; run metrics recorded)
-- P2 — Frontend features (Home, Jobs, Filters, Pagination, Job Details, responsive): PASS (Playwright tests passed)
-- P3 — Admin/ingestion observability dashboard: PASS (Playwright tests passed)
+- P0 — Ingestion core: PASS
+- P1 — REST API: PASS
+- P2 — Core discovery frontend: PASS
+- P3 — Admin / ingestion observability: PASS
 
 ## Final build & verification commands (what I ran)
 
@@ -177,4 +171,4 @@ cd frontend && npx playwright test --config=playwright.config.ts --reporter=list
 
 ---
 
-If you want, I can now update `README` with a short troubleshooting section, add example curl responses, or prepare commit/PR metadata. I will not commit or create a PR until you ask.
+ 
