@@ -24,6 +24,7 @@ if (allowedFrontendUrls.size) {
       res.setHeader('Vary', 'Origin');
       res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Access-Control-Max-Age', '600');
     }
     if (req.method === 'OPTIONS') return res.sendStatus(origin && allowedFrontendUrls.has(origin) ? 204 : 403);
     next();
